@@ -27,6 +27,11 @@ const UserSchema = new Schema({
         },
     ],
     lastLoginIp: String,
+    authProvider: {
+        type: String,
+        default: 'local',
+        immutable: true,
+    },
 });
 
 export interface UserDocument extends Document {
@@ -48,6 +53,8 @@ export interface UserDocument extends Document {
     lastLoginTime: Date;
     /** 最后登录IP */
     lastLoginIp: string;
+    /** 账号来源(local/ldap) */
+    authProvider: string;
 }
 
 /**

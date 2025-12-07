@@ -38,6 +38,12 @@ Fiora provides two ways to install
 - [Install by source code](https://yinxin630.github.io/fiora/docs/install#how-to-run)
 - [Install by docker](https://yinxin630.github.io/fiora/docs/install#running-on-the-docker)
 
+## LDAP Auth (optional)
+
+- Set environment variables: `LDAP_ENABLE`, `LDAP_URL`, `LDAP_BIND_DN`, `LDAP_BIND_CREDENTIALS`, `LDAP_SEARCH_BASE`, `LDAP_SEARCH_FILTER` (default `'(uid={{username}})'`), `LDAP_TLS_OPTIONS` (JSON string for TLS options).
+- Login flow: LDAP is tried first (unless `authType=local` is sent), and falls back to local password auth on failure.
+- First-time LDAP users are created locally, added to the default group, and marked `authProvider=ldap` (no local password stored/reset).
+
 ## Change Log
 
 You can find the Fiora changelog [on the website](https://yinxin630.github.io/fiora/docs/changelog)

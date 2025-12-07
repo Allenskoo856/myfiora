@@ -53,4 +53,17 @@ export default {
         bucket: env.BUCKET || '',
         endpoint: env.ENDPOINT || '',
     },
+
+    /** LDAP 认证配置 */
+    ldap: {
+        enable: env.LDAP_ENABLE ? env.LDAP_ENABLE === 'true' : false,
+        url: env.LDAP_URL || '',
+        bindDN: env.LDAP_BIND_DN || '',
+        bindCredentials: env.LDAP_BIND_CREDENTIALS || '',
+        searchBase: env.LDAP_SEARCH_BASE || '',
+        searchFilter: env.LDAP_SEARCH_FILTER || '(uid={{username}})',
+        tlsOptions: env.LDAP_TLS_OPTIONS
+            ? JSON.parse(env.LDAP_TLS_OPTIONS)
+            : undefined,
+    },
 };

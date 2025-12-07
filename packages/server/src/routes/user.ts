@@ -4,6 +4,7 @@ import jwt from 'jwt-simple';
 import { Types } from '@fiora/database/mongoose';
 
 import config from '@fiora/config/server';
+import logger from '@fiora/utils/logger';
 import getRandomAvatar from '@fiora/utils/getRandomAvatar';
 import { SALT_ROUNDS } from '@fiora/utils/const';
 import User, { UserDocument } from '@fiora/database/mongoose/models/user';
@@ -19,6 +20,7 @@ import {
     getNewUserKey,
     Redis,
 } from '@fiora/database/redis/initRedis';
+import { authenticateWithLdap } from '../utils/ldap';
 
 const { isValid } = Types.ObjectId;
 
@@ -171,19 +173,83 @@ export async function register(
  * @param ctx Context
  */
 export async function login(
-    ctx: Context<{ username: string; password: string } & Environment>,
+    ctx: Context<
+        {
+            username: string;
+            password: string;
+            authType?: 'ldap' | 'local';
+        } &
+            Environment
+    >,
 ) {
-    const { username, password, os, browser, environment } = ctx.data;
+    const { username, password, os, browser, environment, authType } = ctx.data;
     assert(username, '用户名不能为空');
     assert(password, '密码不能为空');
 
-    const user = await User.findOne({ username });
+    let user = await User.findOne({ username });
+    let isLdapAuthenticated = false;
+
+    // LDAP 优先, 除非前端强制本地
+    if (config.ldap?.enable && authType !== 'local') {
+        try {
+            const ldapUser = await authenticateWithLdap(
+                config.ldap,
+                username,
+                password,
+            );
+
+            if (ldapUser) {
+                isLdapAuthenticated = true;
+
+                if (!user) {
+                    const defaultGroup = await Group.findOne({
+                        isDefault: true,
+                    });
+                    if (!defaultGroup) {
+                        throw new AssertionError({
+                            message: '默认群组不存在',
+                        });
+                    }
+
+                    try {
+                        user = await User.create({
+                            username,
+                            avatar: getRandomAvatar(),
+                            lastLoginIp: ctx.socket.ip,
+                            authProvider: 'ldap',
+                        } as UserDocument);
+                    } catch (err) {
+                        if ((err as Error).name === 'ValidationError') {
+                            return '用户名包含不支持的字符或者长度超过限制';
+                        }
+                        throw err;
+                    }
+
+                    if (!defaultGroup.creator) {
+                        defaultGroup.creator = user._id;
+                    }
+                    defaultGroup.members.push(user._id);
+                    await defaultGroup.save();
+                }
+            }
+        } catch (err) {
+            logger.error('[ldap] authenticate failed', err as Error);
+        }
+    }
+
+    if (!isLdapAuthenticated) {
+        if (!user) {
+            throw new AssertionError({ message: '该用户不存在' });
+        }
+        assert(user.password, '密码错误');
+
+        const isPasswordCorrect = bcrypt.compareSync(password, user.password);
+        assert(isPasswordCorrect, '密码错误');
+    }
+
     if (!user) {
         throw new AssertionError({ message: '该用户不存在' });
     }
-
-    const isPasswordCorrect = bcrypt.compareSync(password, user.password);
-    assert(isPasswordCorrect, '密码错误');
 
     await handleNewUser(user);
 
@@ -451,6 +517,10 @@ export async function changePassword(
     if (!user) {
         throw new AssertionError({ message: '用户不存在' });
     }
+    assert(
+        user.authProvider !== 'ldap',
+        '该账号由企业目录管理, 请在LDAP修改密码',
+    );
     const isPasswordCorrect = bcrypt.compareSync(oldPassword, user.password);
     assert(isPasswordCorrect, '旧密码不正确');
 
@@ -501,6 +571,11 @@ export async function resetUserPassword(ctx: Context<{ username: string }>) {
     if (!user) {
         throw new AssertionError({ message: '用户不存在' });
     }
+
+    assert(
+        user.authProvider !== 'ldap',
+        '该账号由企业目录管理, 请在LDAP修改密码',
+    );
 
     const newPassword = 'helloworld';
     const salt = await bcrypt.genSalt(SALT_ROUNDS);

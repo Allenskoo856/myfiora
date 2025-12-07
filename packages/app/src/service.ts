@@ -50,6 +50,7 @@ export async function login(
     os = '',
     browser = '',
     environment = '',
+    authType?: 'ldap' | 'local',
 ) {
     const [err, user] = await fetch('login', {
         username,
@@ -57,6 +58,7 @@ export async function login(
         os,
         browser,
         environment,
+        authType,
     });
 
     if (err) {
