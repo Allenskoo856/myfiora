@@ -15,6 +15,7 @@ export enum LocalStorageKey {
     SelfVoiceSwitch = 'selfVoiceSwitch',
     TagColorMode = 'tagColorMode',
     EnableSearchExpression = 'enableSearchExpression',
+    FontSize = 'fontSize',
 }
 
 /**
@@ -35,6 +36,12 @@ function getTextValue(key: string, defaultValue: string) {
 function getSwitchValue(key: string, defaultValue: boolean = true) {
     const value = window.localStorage.getItem(key);
     return value ? value === 'true' : defaultValue;
+}
+
+function getNumberValue(key: string, defaultValue: number) {
+    const value = window.localStorage.getItem(key);
+    const parsed = value ? Number(value) : NaN;
+    return Number.isNaN(parsed) ? defaultValue : parsed;
 }
 
 /**
@@ -85,5 +92,6 @@ export default function getData() {
             LocalStorageKey.EnableSearchExpression,
             false,
         ),
+        fontSize: getNumberValue(LocalStorageKey.FontSize, 15),
     };
 }

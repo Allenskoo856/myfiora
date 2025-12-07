@@ -36,6 +36,9 @@ function Sidebar() {
     const action = useAction();
     const isLogin = useIsLogin();
     const isConnect = useSelector((state: State) => state.connect);
+    const functionBarVisible = useSelector(
+        (state: State) => state.status.functionBarAndLinkmanListVisible,
+    );
     const isAdmin = useSelector(
         (state: State) => state.user && state.user.isAdmin,
     );
@@ -107,6 +110,21 @@ function Sidebar() {
                                 onClick={() => toggleAdminDialogVisible(true)}
                             />,
                         )}
+                    {renderTooltip(
+                        functionBarVisible ? '收起列表' : '展开列表',
+                        <IconButton
+                            width={40}
+                            height={40}
+                            icon="search"
+                            iconSize={24}
+                            onClick={() =>
+                                action.setStatus(
+                                    'functionBarAndLinkmanListVisible',
+                                    !functionBarVisible,
+                                )
+                            }
+                        />,
+                    )}
                     {renderTooltip(
                         '关于',
                         <IconButton

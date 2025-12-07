@@ -140,6 +140,8 @@ export interface State {
         functionBarAndLinkmanListVisible: boolean;
         /** enable search expression when input some phrase */
         enableSearchExpression: boolean;
+        /** 聊天字体大小 */
+        fontSize: number;
     };
 }
 
@@ -259,6 +261,7 @@ export const initialState: State = {
         sidebarVisible: !isMobile,
         functionBarAndLinkmanListVisible: !isMobile,
         enableSearchExpression: localStorage.enableSearchExpression,
+        fontSize: localStorage.fontSize,
     },
 };
 

@@ -17,6 +17,7 @@ import {
 import useAction from '../../hooks/useAction';
 import useAero from '../../hooks/useAero';
 import store from '../../state/store';
+import { CSSProperties } from 'react';
 
 let lastMessageIdCache = '';
 
@@ -26,6 +27,7 @@ function Chat() {
     const hasUserInfo = useSelector((state: State) => !!state.user);
     const focus = useSelector((state: State) => state.focus);
     const linkman = useSelector((state: State) => state.linkmans[focus]);
+    const fontSize = useSelector((state: State) => state.status.fontSize);
     const [groupManagePanel, toggleGroupManagePanel] = useState(false);
     const context = useContext(ShowUserOrGroupInfoContext);
     const aero = useAero();
@@ -105,12 +107,16 @@ function Chat() {
         return () => clearInterval(timer);
     }, [focus]);
 
+    const chatStyle = {
+        ['--chat-font-size' as keyof CSSProperties]: `${fontSize}px`,
+    };
+
     if (!hasUserInfo) {
-        return <div className={Style.chat} />;
+        return <div className={Style.chat} style={chatStyle} />;
     }
     if (!linkman) {
         return (
-            <div className={Style.chat}>
+            <div className={Style.chat} style={chatStyle}>
                 <HeaderBar id="" name="" type="" onClickFunction={() => {}} />
                 <div className={Style.noLinkman}>
                     <div className={Style.noLinkmanImage} />
@@ -143,7 +149,7 @@ function Chat() {
     }
 
     return (
-        <div className={Style.chat} {...aero}>
+        <div className={Style.chat} style={chatStyle} {...aero}>
             <HeaderBar
                 id={linkman._id}
                 name={linkman.name}

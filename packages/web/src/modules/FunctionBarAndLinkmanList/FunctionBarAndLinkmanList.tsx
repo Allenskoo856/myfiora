@@ -16,6 +16,7 @@ function FunctionBarAndLinkmanList() {
     const functionBarAndLinkmanListVisible = useSelector(
         (state: State) => state.status.functionBarAndLinkmanListVisible,
     );
+    const fontSize = useSelector((state: State) => state.status.fontSize);
     const aero = useAero();
 
     if (!functionBarAndLinkmanListVisible) {
@@ -33,6 +34,7 @@ function FunctionBarAndLinkmanList() {
             className={Style.functionBarAndLinkmanList}
             onClick={handleClick}
             role="button"
+            style={{ ['--chat-font-size' as React.CSSProperties]: `${fontSize}px` }}
         >
             <div className={Style.container} {...aero}>
                 {isLogin && <FunctionBar />}
