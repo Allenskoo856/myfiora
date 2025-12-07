@@ -4,7 +4,6 @@ import axios from 'axios';
 import assert, { AssertionError } from 'assert';
 import { promisify } from 'util';
 import RegexEscape from 'regex-escape';
-import OSS, { STS } from 'ali-oss';
 
 import config from '@fiora/config/server';
 import logger from '@fiora/utils/logger';
@@ -238,77 +237,12 @@ export async function sealUserOnlineIp(ctx: Context<{ userId: string }>) {
     };
 }
 
-type STSResult = {
-    enable: boolean;
-    AccessKeyId: string;
-    AccessKeySecret: string;
-    bucket: string;
-    region: string;
-    SecurityToken: string;
-    endpoint: string;
-};
-
-// eslint-disable-next-line consistent-return
-export async function getSTS(): Promise<STSResult> {
-    if (!config.aliyunOSS.enable) {
-        // @ts-ignore
-        return {
-            enable: false,
-        };
-    }
-
-    const sts = new STS({
-        accessKeyId: config.aliyunOSS.accessKeyId,
-        accessKeySecret: config.aliyunOSS.accessKeySecret,
-    });
-    try {
-        const result = await sts.assumeRole(
-            config.aliyunOSS.roleArn,
-            undefined,
-            undefined,
-            'fiora-uploader',
-        );
-        // @ts-ignore
-        return {
-            enable: true,
-            region: config.aliyunOSS.region,
-            bucket: config.aliyunOSS.bucket,
-            endpoint: config.aliyunOSS.endpoint,
-            ...result.credentials,
-        };
-    } catch (err) {
-        const typedErr = err as Error;
-        assert.fail(`获取 STS 失败 - ${typedErr.message}`);
-    }
-}
+// getSTS 已移除，不再使用阿里云OSS
 
 export async function uploadFile(
     ctx: Context<{ fileName: string; file: any; isBase64?: boolean }>,
 ) {
     try {
-        if (config.aliyunOSS.enable) {
-            const sts = await getSTS();
-            const client = new OSS({
-                accessKeyId: sts.AccessKeyId,
-                accessKeySecret: sts.AccessKeySecret,
-                bucket: sts.bucket,
-                region: sts.region,
-                stsToken: sts.SecurityToken,
-            });
-            const result = await client.put(
-                ctx.data.fileName,
-                ctx.data.isBase64
-                    ? Buffer.from(ctx.data.file, 'base64')
-                    : ctx.data.file,
-            );
-            if (result.res.status === 200) {
-                return {
-                    url: `//${config.aliyunOSS.endpoint}/${result.name}`,
-                };
-            }
-            throw Error('上传阿里云OSS失败');
-        }
-
         const [directory, fileName] = ctx.data.fileName.split('/');
         const filePath = path.resolve('__dirname', '../public', directory);
         const isExists = await promisify(fs.exists)(filePath);
@@ -317,7 +251,9 @@ export async function uploadFile(
         }
         await promisify(fs.writeFile)(
             path.resolve(filePath, fileName),
-            ctx.data.file,
+            ctx.data.isBase64
+                ? Buffer.from(ctx.data.file, 'base64')
+                : ctx.data.file,
         );
         return {
             url: `/${ctx.data.fileName}`,

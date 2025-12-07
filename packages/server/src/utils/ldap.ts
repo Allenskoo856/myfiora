@@ -1,9 +1,4 @@
-import ldap, {
-    Client,
-    SearchCallbackResponse,
-    SearchEntry,
-    SearchOptions,
-} from 'ldapjs';
+import { Client, SearchOptions } from 'ldapts';
 
 export type LdapConfig = {
     enable: boolean;
@@ -24,50 +19,6 @@ function formatSearchFilter(template: string, username: string) {
     return template.replace(/\{\{username\}\}/g, username);
 }
 
-function createClient(config: LdapConfig): Client {
-    return ldap.createClient({
-        url: config.url,
-        tlsOptions: config.tlsOptions,
-    });
-}
-
-function bind(client: Client, dn: string, password: string) {
-    return new Promise<void>((resolve, reject) => {
-        client.bind(dn, password, (err: Error | null | undefined) => {
-            if (err) {
-                reject(err);
-            } else {
-                resolve();
-            }
-        });
-    });
-}
-
-function search(client: Client, base: string, options: SearchOptions) {
-    return new Promise<SearchCallbackResponse>((resolve, reject) => {
-        client.search(base, options, (err: Error | null, res: any) => {
-            if (err) {
-                reject(err);
-            } else {
-                resolve(res as SearchCallbackResponse);
-            }
-        });
-    });
-}
-
-function getFirstEntry(res: SearchCallbackResponse) {
-    return new Promise<SearchEntry | null>((resolve, reject) => {
-        let found: SearchEntry | null = null;
-        res.on('searchEntry', (entry: SearchEntry) => {
-            if (!found) {
-                found = entry;
-            }
-        });
-        res.on('error', reject);
-        res.on('end', () => resolve(found));
-    });
-}
-
 export async function authenticateWithLdap(
     config: LdapConfig,
     username: string,
@@ -77,28 +28,35 @@ export async function authenticateWithLdap(
         return null;
     }
 
-    const client = createClient(config);
+    const client = new Client({
+        url: config.url,
+        tlsOptions: config.tlsOptions,
+    });
+
     try {
-        await bind(client, config.bindDN, config.bindCredentials);
+        await client.bind(config.bindDN, config.bindCredentials);
 
         const filter = formatSearchFilter(config.searchFilter, username);
-        const res = await search(client, config.searchBase, {
+        const { searchEntries } = await client.search(config.searchBase, {
             scope: 'sub',
             filter,
             sizeLimit: 1,
         });
 
-        const entry = await getFirstEntry(res);
-        if (!entry || !entry.dn) {
+        if (!searchEntries || searchEntries.length === 0) {
             return null;
         }
 
-        await bind(client, entry.dn, password);
+        const entry = searchEntries[0];
+        const userDn = entry.dn;
+
+        await client.bind(userDn, password);
+
         return {
-            dn: entry.dn,
+            dn: userDn,
             attributes: entry as unknown as Record<string, unknown>,
         };
     } finally {
-        client.unbind();
+        await client.unbind();
     }
 }
