@@ -184,3 +184,4 @@ Run via: `yarn script` (uses Lerna to execute bin package)
 ## copilot-instructions.md
 - 每次回复时候需要使用简体中文，语义表达准确、不啰嗦、不重复、直接给出解决方案
 - 没经过用户同意，不要随意创建makdown文件、以及shell脚本、允许创建和修改项目相关的ts、js文件及config文件
+- 当前项目是前后端分离的项目、每次修改代码之后请注意前后端代码是否需要同时修改、重载后前后端进程需要一起启动
