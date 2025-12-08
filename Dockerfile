@@ -1,7 +1,5 @@
 FROM node:16-alpine
 
-ENV NODE_OPTIONS=--openssl-legacy-provider
-
 WORKDIR /usr/app/fiora
 
 COPY packages ./packages
@@ -10,6 +8,6 @@ RUN touch .env
 
 RUN yarn install
 
-RUN yarn build:web
+RUN NODE_OPTIONS=--openssl-legacy-provider yarn build:web
 
-CMD yarn start
+CMD ["yarn", "start"]
