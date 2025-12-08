@@ -13,7 +13,6 @@ export default function isLogin(socket: Socket) {
         'guest',
         'getDefaultGroupHistoryMessages',
         'getDefaultGroupOnlineMembers',
-        'getBaiduToken',
         'getGroupBasicInfo',
         'getSTS',
     ]);

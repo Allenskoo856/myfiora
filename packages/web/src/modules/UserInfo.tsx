@@ -135,7 +135,8 @@ function UserInfo(props: UserInfoProps) {
     }
 
     function searchIp(ip: string) {
-        window.open(`https://www.baidu.com/s?wd=${ip}`);
+        // IP 查询已禁用（内网部署不需要外网依赖）
+        Message.info('内网模式下 IP 查询功能已禁用');
     }
 
     function handleClose() {

@@ -8,7 +8,6 @@ import compressImage from '@fiora/utils/compressImage';
 import config from '@fiora/config/client';
 import { isMobile } from '@fiora/utils/ua';
 import fetch from '../../utils/fetch';
-import voice from '../../utils/voice';
 import readDiskFile, { ReadFileResult } from '../../utils/readDiskFile';
 import uploadFile from '../../utils/uploadFile';
 import getRandomHuaji from '../../utils/getRandomHuaji';
@@ -69,9 +68,6 @@ function ChatInput() {
     const tag = useSelector((state: State) => state.user?.tag);
     const focus = useSelector((state: State) => state.focus);
     const linkman = useSelector((state: State) => state.linkmans[focus]);
-    const selfVoiceSwitch = useSelector(
-        (state: State) => state.status.selfVoiceSwitch,
-    );
     const enableSearchExpression = useSelector(
         (state: State) => state.status.enableSearchExpression,
     );
@@ -178,19 +174,7 @@ function ChatInput() {
         // @ts-ignore
         action.addLinkmanMessage(focus, message);
 
-        if (selfVoiceSwitch && type === 'text') {
-            const text = content
-                .replace(
-                    /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_+.~#?&//=]*)/g,
-                    '',
-                )
-                .replace(/#/g, '');
-
-            if (text.length > 0 && text.length <= 100) {
-                voice.push(text, Math.random().toString());
-            }
-        }
-
+        // 语音功能已禁用
         return _id;
     }
 

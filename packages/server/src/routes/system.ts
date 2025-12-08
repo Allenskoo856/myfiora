@@ -21,11 +21,6 @@ import {
     Redis,
 } from '@fiora/database/redis/initRedis';
 
-/** 百度语言合成token */
-let baiduToken = '';
-/** 最后一次获取token的时间 */
-let lastBaiduTokenTime = Date.now();
-
 /**
  * 搜索用户和群组
  * @param ctx Context
@@ -61,82 +56,15 @@ export async function search(ctx: Context<{ keywords: string }>) {
 }
 
 /**
- * 搜索表情包, 爬其它站资源
+ * 搜索表情包
  * @param ctx Context
  */
 export async function searchExpression(
     ctx: Context<{ keywords: string; limit?: number }>,
 ) {
-    const { keywords, limit = Infinity } = ctx.data;
-    if (keywords === '') {
-        return [];
-    }
-
-    const res = await axios({
-        method: 'get',
-        url: `https://pic.sogou.com/pics/json.jsp?query=${encodeURIComponent(
-            `${keywords} 表情`,
-        )}&st=5&start=0&xml_len=60&callback=callback&reqFrom=wap_result&`,
-        headers: {
-            accept: '*/*',
-            'accept-language': 'zh-CN,zh;q=0.9,en;q=0.8,zh-TW;q=0.7',
-            'cache-control': 'no-cache',
-            pragma: 'no-cache',
-            'sec-fetch-mode': 'navigate',
-            'sec-fetch-site': 'same-origin',
-            referrer: `https://pic.sogou.com/pic/emo/searchList.jsp?statref=search_form&uID=hTHHybkSPt37C46z&spver=0&rcer=&keyword=${encodeURIComponent(
-                keywords,
-            )}`,
-            referrerPolicy: 'no-referrer-when-downgrade',
-            'user-agent':
-                'Mozilla/5.0 (iPhone; CPU iPhone OS 11_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/11.0 Mobile/15A372 Safari/604.1',
-        },
-    });
-    assert(res.status === 200, '搜索表情包失败, 请重试');
-
-    try {
-        const parseDataResult = res.data.match(/callback\((.+)\)/);
-        const data = JSON.parse(`${parseDataResult[1]}`);
-
-        type Image = {
-            locImageLink: string;
-            width: number;
-            height: number;
-        };
-        const images = data.items as Image[];
-        return images
-            .map(({ locImageLink, width, height }) => ({
-                image: locImageLink,
-                width,
-                height,
-            }))
-            .filter((image, index) =>
-                limit === Infinity ? true : index < limit,
-            );
-    } catch (err) {
-        assert(false, '搜索表情包失败, 数据解析异常');
-    }
-
+    // 搜狐在线API已禁用（内网部署不需要外网依赖）
+    // 返回空列表
     return [];
-}
-
-/**
- * 获取百度语言合成token
- */
-export async function getBaiduToken() {
-    if (baiduToken && Date.now() < lastBaiduTokenTime) {
-        return { token: baiduToken };
-    }
-
-    const res = await axios.get(
-        'https://openapi.baidu.com/oauth/2.0/token?grant_type=client_credentials&client_id=pw152BzvaSZVwrUf3Z2OHXM6&client_secret=fa273cc704b080e85ad61719abbf7794',
-    );
-    assert(res.status === 200, '请求百度token失败');
-
-    baiduToken = res.data.access_token;
-    lastBaiduTokenTime =
-        Date.now() + (res.data.expires_in - 60 * 60 * 24) * 1000;
-    return { token: baiduToken };
 }
 
 /**
