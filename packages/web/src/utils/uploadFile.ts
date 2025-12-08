@@ -1,4 +1,15 @@
 import fetch from './fetch';
+import config from '@fiora/config/client';
+
+function withServer(url = '') {
+    if (!url) return url;
+    if (/^https?:\/\//.test(url) || url.startsWith('//')) return url;
+    const base = config.server || '';
+    if (base.endsWith('/') && url.startsWith('/')) {
+        return `${base.slice(0, -1)}${url}`;
+    }
+    return `${base}${url}`;
+}
 
 /**
  * 初始化（保留接口兼容性，但不做任何操作）
@@ -11,7 +22,8 @@ export async function initOSS() {
  * 获取文件URL（移除OSS处理逻辑）
  */
 export function getOSSFileUrl(url = '', process = '') {
-    return url;
+    const fullUrl = withServer(url);
+    return process ? `${fullUrl}${process}` : fullUrl;
 }
 
 /**
@@ -30,5 +42,5 @@ export default async function uploadFile(
     if (uploadErr) {
         throw Error(uploadErr);
     }
-    return result.url;
+    return withServer(result.url);
 }

@@ -243,14 +243,16 @@ export async function uploadFile(
     ctx: Context<{ fileName: string; file: any; isBase64?: boolean }>,
 ) {
     try {
-        const [directory, fileName] = ctx.data.fileName.split('/');
-        const filePath = path.resolve('__dirname', '../public', directory);
-        const isExists = await promisify(fs.exists)(filePath);
-        if (!isExists) {
-            await promisify(fs.mkdir)(filePath);
-        }
+        // 静态资源目录在 packages/server/public，使用绝对路径定位
+        const serverRoot = path.resolve(__dirname, '../..');
+        const publicPath = path.join(serverRoot, 'public');
+        const targetPath = path.resolve(publicPath, ctx.data.fileName);
+        const targetDir = path.dirname(targetPath);
+
+        await fs.promises.mkdir(targetDir, { recursive: true });
+
         await promisify(fs.writeFile)(
-            path.resolve(filePath, fileName),
+            targetPath,
             ctx.data.isBase64
                 ? Buffer.from(ctx.data.file, 'base64')
                 : ctx.data.file,

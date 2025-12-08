@@ -79,7 +79,7 @@ function ChatInput() {
     const [codeEditorDialog, toggleCodeEditorDialog] = useState(false);
     const [inputFocus, toggleInputFocus] = useState(false);
     const [at, setAt] = useState({ enable: false, content: '' });
-    const $input = useRef<HTMLInputElement>(null);
+    const $input = useRef<HTMLTextAreaElement>(null);
     const aero = useAero();
     const [expressions, setExpressions] = useState<
         { image: string; width: number; height: number }[]
@@ -133,7 +133,7 @@ function ChatInput() {
      * @param value 要插入的文本
      */
     function insertAtCursor(value: string) {
-        const input = $input.current as unknown as HTMLInputElement;
+        const input = $input.current as HTMLTextAreaElement;
         if (input.selectionStart || input.selectionStart === 0) {
             const startPos = input.selectionStart;
             const endPos = input.selectionEnd;
@@ -471,6 +471,10 @@ function ChatInput() {
         if (e.key === 'Tab') {
             e.preventDefault();
         } else if (e.key === 'Enter' && !inputIME) {
+            if (e.shiftKey) {
+                return;
+            }
+            e.preventDefault();
             sendTextMessage();
         } else if (e.altKey && (e.key === 's' || e.key === 'ß')) {
             sendHuaji();
@@ -643,9 +647,8 @@ function ChatInput() {
                 autoComplete="off"
                 onSubmit={(e) => e.preventDefault()}
             >
-                <input
+                <textarea
                     className={Style.input}
-                    type="text"
                     placeholder="随便聊点啥吧, 不要无意义刷屏~~"
                     maxLength={2048}
                     ref={$input}

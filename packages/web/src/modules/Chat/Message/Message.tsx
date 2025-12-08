@@ -2,11 +2,14 @@ import React, { Component, createRef } from 'react';
 import pureRender from 'pure-render-decorator';
 import { connect } from 'react-redux';
 
+import CopyToClipboard from 'react-copy-to-clipboard';
+
 import Time from '@fiora/utils/time';
 import { getRandomColor, getPerRandomColor } from '@fiora/utils/getRandomColor';
 import client from '@fiora/config/client';
 import Style from './Message.less';
 import Avatar from '../../../components/Avatar';
+import MessageToast from '../../../components/Message';
 import TextMessage from './TextMessage';
 import { ShowUserOrGroupInfoContext } from '../../../context';
 import ImageMessage from './ImageMessage';
@@ -73,20 +76,15 @@ class Message extends Component<MessageProps, MessageState> {
     }
 
     handleMouseEnter = () => {
-        const { isAdmin, isSelf, type } = this.props;
-        if (type === 'system') {
-            return;
-        }
-        if (isAdmin || (!client.disableDeleteMessage && isSelf)) {
-            this.setState({ showButtonList: true });
-        }
+        const { type } = this.props;
+        if (type === 'system') return;
+        this.setState({ showButtonList: true });
     };
 
     handleMouseLeave = () => {
-        const { isAdmin, isSelf } = this.props;
-        if (isAdmin || (!client.disableDeleteMessage && isSelf)) {
-            this.setState({ showButtonList: false });
-        }
+        const { type } = this.props;
+        if (type === 'system') return;
+        this.setState({ showButtonList: false });
     };
 
     /**
@@ -94,6 +92,7 @@ class Message extends Component<MessageProps, MessageState> {
      */
     handleDeleteMessage = async () => {
         const { id, linkmanId, loading, isAdmin } = this.props;
+        if (!isAdmin && client.disableDeleteMessage) return;
         if (loading) {
             dispatch({
                 type: ActionTypes.DeleteMessage,
@@ -129,6 +128,26 @@ class Message extends Component<MessageProps, MessageState> {
                 avatar,
             });
         }
+    }
+
+    getCopyContent() {
+        const { type, content } = this.props;
+        if (type === 'system') return '';
+
+        if (['text', 'code', 'url', 'image'].includes(type)) {
+            return content;
+        }
+
+        if (type === 'file') {
+            try {
+                const parsed = JSON.parse(content);
+                return parsed.fileUrl || parsed.filename || content;
+            } catch (err) {
+                return content;
+            }
+        }
+
+        return '';
     }
 
     formatTime() {
@@ -189,6 +208,7 @@ class Message extends Component<MessageProps, MessageState> {
     render() {
         const { isSelf, avatar, tag, tagColorMode, username } = this.props;
         const { showButtonList } = this.state;
+        const copyContent = this.getCopyContent();
 
         let tagColor = `rgb(${themes.default.primaryColor})`;
         if (tagColorMode === 'fixedColor') {
@@ -238,22 +258,51 @@ class Message extends Component<MessageProps, MessageState> {
                         </div>
                         {showButtonList && (
                             <div className={Style.buttonList}>
-                                <Tooltip
-                                    placement={isSelf ? 'left' : 'right'}
-                                    mouseEnterDelay={0.3}
-                                    overlay={<span>撤回消息</span>}
-                                >
-                                    <div>
-                                        <IconButton
-                                            className={Style.button}
-                                            icon="recall"
-                                            iconSize={16}
-                                            width={20}
-                                            height={20}
-                                            onClick={this.handleDeleteMessage}
-                                        />
-                                    </div>
-                                </Tooltip>
+                                {copyContent && (
+                                    <Tooltip
+                                        placement={isSelf ? 'left' : 'right'}
+                                        mouseEnterDelay={0.2}
+                                        overlay={<span>复制内容</span>}
+                                    >
+                                        <CopyToClipboard
+                                            text={copyContent}
+                                            onCopy={() =>
+                                                MessageToast.success(
+                                                    '已复制到剪贴板',
+                                                )
+                                            }
+                                        >
+                                            <IconButton
+                                                className={Style.button}
+                                                icon="share"
+                                                iconSize={16}
+                                                width={20}
+                                                height={20}
+                                            />
+                                        </CopyToClipboard>
+                                    </Tooltip>
+                                )}
+                                {(this.props.isAdmin ||
+                                    (isSelf && !client.disableDeleteMessage)) && (
+                                        <Tooltip
+                                            placement={isSelf ? 'left' : 'right'}
+                                            mouseEnterDelay={0.3}
+                                            overlay={<span>撤回消息</span>}
+                                        >
+                                            <div>
+                                                <IconButton
+                                                    className={Style.button}
+                                                    icon="recall"
+                                                    iconSize={16}
+                                                    width={20}
+                                                    height={20}
+                                                    onClick={
+                                                        this.handleDeleteMessage
+                                                    }
+                                                />
+                                            </div>
+                                        </Tooltip>
+                                    )}
                             </div>
                         )}
                     </div>
