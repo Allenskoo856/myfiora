@@ -278,4 +278,111 @@ socket.on(
     },
 );
 
+// Bot消息流式输出
+const botStreamingMessages = new Map<string, string>();
+
+socket.on('botMessageStream', ({ tempMessageId, chunk, botId }: {
+    tempMessageId: string;
+    chunk: string;
+    botId: string;
+}) => {
+    const currentContent = botStreamingMessages.get(tempMessageId) || '';
+    const newContent = currentContent + chunk;
+    botStreamingMessages.set(tempMessageId, newContent);
+
+    const state = store.getState();
+    const focus = state.focus;
+    
+    // 检查是否已存在该临时消息
+    const existingMessage = state.linkmans[focus]?.messages[tempMessageId];
+    
+    if (!existingMessage) {
+        // 创建新的流式消息
+        dispatch({
+            type: ActionTypes.AddLinkmanMessage,
+            payload: {
+                linkmanId: focus,
+                message: {
+                    _id: tempMessageId,
+                    type: 'text',
+                    content: newContent,
+                    from: {
+                        _id: botId,
+                        username: 'AI助手',
+                        avatar: '',
+                        originUsername: 'AI助手',
+                        tag: 'bot',
+                    },
+                    loading: true,
+                    createTime: new Date().toISOString(),
+                },
+            },
+        });
+    } else {
+        // 更新现有消息内容
+        dispatch({
+            type: ActionTypes.UpdateMessage,
+            payload: {
+                linkmanId: focus,
+                messageId: tempMessageId,
+                value: {
+                    ...existingMessage,
+                    content: newContent,
+                },
+            },
+        });
+    }
+});
+
+socket.on('botMessageComplete', ({ tempMessageId, message }: {
+    tempMessageId: string;
+    message: any;
+}) => {
+    botStreamingMessages.delete(tempMessageId);
+    
+    const state = store.getState();
+    const focus = state.focus;
+    
+    // 用完整消息替换临时消息
+    dispatch({
+        type: ActionTypes.DeleteMessage,
+        payload: {
+            linkmanId: focus,
+            messageId: tempMessageId,
+            shouldDelete: true,
+        },
+    });
+    
+    dispatch({
+        type: ActionTypes.AddLinkmanMessage,
+        payload: {
+            linkmanId: focus,
+            message,
+        },
+    });
+});
+
+socket.on('botMessageError', ({ tempMessageId, error }: {
+    tempMessageId: string;
+    error: string;
+}) => {
+    botStreamingMessages.delete(tempMessageId);
+    
+    const state = store.getState();
+    const focus = state.focus;
+    
+    // 删除临时消息并显示错误
+    dispatch({
+        type: ActionTypes.DeleteMessage,
+        payload: {
+            linkmanId: focus,
+            messageId: tempMessageId,
+            shouldDelete: true,
+        },
+    });
+    
+    // 可以添加错误消息显示
+    console.error('Bot message error:', error);
+});
+
 export default socket;

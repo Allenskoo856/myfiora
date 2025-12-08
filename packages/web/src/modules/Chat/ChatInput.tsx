@@ -20,7 +20,7 @@ import Avatar from '../../components/Avatar';
 import Message from '../../components/Message';
 import { Menu, MenuItem } from '../../components/Menu';
 import { State } from '../../state/reducer';
-import { sendMessage } from '../../service';
+import { sendMessage, sendMessageToBot, mentionBotInGroup, getBotConfig } from '../../service';
 import Tooltip from '../../components/Tooltip';
 import useAero from '../../hooks/useAero';
 
@@ -67,6 +67,7 @@ function ChatInput() {
     const avatar = useSelector((state: State) => state.user?.avatar);
     const tag = useSelector((state: State) => state.user?.tag);
     const focus = useSelector((state: State) => state.focus);
+    const isBot = focus && focus.startsWith('bot-');
     const linkman = useSelector((state: State) => state.linkmans[focus]);
     const enableSearchExpression = useSelector(
         (state: State) => state.status.enableSearchExpression,
@@ -185,7 +186,19 @@ function ChatInput() {
         content: string,
         linkmanId = focus,
     ) {
-        if (linkman.unread > 0) {
+        // Bot聊天特殊处理
+        if (isBot && type === 'text') {
+            try {
+                await sendMessageToBot(content);
+                // Bot消息通过Socket事件接收，这里不需要处理
+            } catch (error) {
+                action.deleteMessage(focus, localId, true);
+                Message.error('发送失败');
+            }
+            return;
+        }
+
+        if (linkman && linkman.unread > 0) {
             action.setLinkmanProperty(linkman._id, 'unread', 0);
         }
         const [error, message] = await sendMessage(linkmanId, type, content);
@@ -214,7 +227,7 @@ function ChatInput() {
 
         // @ts-ignore
         const ext = image.type.split('/').pop().toLowerCase();
-        const url = URL.createObjectURL(image.result);
+        const url = URL.createObjectURL(image.result as Blob);
 
         const img = new Image();
         img.onload = async () => {
@@ -387,7 +400,7 @@ function ChatInput() {
         return null;
     }
 
-    function sendTextMessage() {
+    async function sendTextMessage() {
         if (!connect) {
             return Message.error('发送消息失败, 您当前处于离线状态');
         }
@@ -396,6 +409,33 @@ function ChatInput() {
         const message = $input.current.value.trim();
         if (message.length === 0) {
             return null;
+        }
+
+        // 检测群聊中是否@了AI机器人
+        if (linkman && linkman.type === 'group' && message.includes('@')) {
+            try {
+                const botConfig = await getBotConfig();
+                if (botConfig && botConfig.enabled) {
+                    const botMentionPattern = new RegExp(`@${botConfig.name}\\s+(.+)`, 's');
+                    if (botMentionPattern.test(message)) {
+                        // 用户@了机器人，调用mentionBotInGroup
+                        const id = addSelfMessage('text', xss(message));
+                        try {
+                            await mentionBotInGroup(linkman._id, message);
+                            // Bot响应通过Socket事件接收
+                        } catch (error) {
+                            action.deleteMessage(focus, id, true);
+                            Message.error('机器人回复失败');
+                        }
+                        // @ts-ignore
+                        $input.current.value = '';
+                        setExpressions([]);
+                        return null;
+                    }
+                }
+            } catch (error) {
+                // 获取Bot配置失败，继续正常发送
+            }
         }
 
         if (

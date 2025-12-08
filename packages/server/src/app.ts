@@ -23,6 +23,7 @@ import * as messageRoutes from './routes/message';
 import * as systemRoutes from './routes/system';
 import * as notificationRoutes from './routes/notification';
 import * as historyRoutes from './routes/history';
+import * as botRoutes from './routes/bot';
 import registerRoutes from './middlewares/registerRoutes';
 
 const app = new Koa();
@@ -69,6 +70,7 @@ const routes: Routes = {
     ...systemRoutes,
     ...notificationRoutes,
     ...historyRoutes,
+    ...botRoutes,
 };
 Object.keys(routes).forEach((key) => {
     if (key.startsWith('_')) {

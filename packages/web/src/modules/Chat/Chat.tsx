@@ -27,6 +27,7 @@ function Chat() {
     const hasUserInfo = useSelector((state: State) => !!state.user);
     const focus = useSelector((state: State) => state.focus);
     const linkman = useSelector((state: State) => state.linkmans[focus]);
+    const isBot = focus && focus.startsWith('bot-');
     const fontSize = useSelector((state: State) => state.status.fontSize);
     const [groupManagePanel, toggleGroupManagePanel] = useState(false);
     const context = useContext(ShowUserOrGroupInfoContext);
@@ -66,7 +67,7 @@ function Chat() {
         action.setLinkmanProperty(focus, 'isOnline', isOnline);
     }
     useEffect(() => {
-        if (!linkman) {
+        if (!linkman || isBot) {
             return () => {};
         }
         const request =
@@ -114,7 +115,7 @@ function Chat() {
     if (!hasUserInfo) {
         return <div className={Style.chat} style={chatStyle} />;
     }
-    if (!linkman) {
+    if (!linkman && !isBot) {
         return (
             <div className={Style.chat} style={chatStyle}>
                 <HeaderBar id="" name="" type="" onClickFunction={() => {}} />
@@ -124,6 +125,22 @@ function Chat() {
                         找个群或者好友呀, 不然怎么聊天~~
                     </h2>
                 </div>
+            </div>
+        );
+    }
+
+    // Bot聊天特殊处理
+    if (isBot) {
+        return (
+            <div className={Style.chat} style={chatStyle} {...aero}>
+                <HeaderBar
+                    id={focus}
+                    name="AI助手"
+                    type="bot"
+                    onClickFunction={() => {}}
+                />
+                <MessageList />
+                <ChatInput />
             </div>
         );
     }

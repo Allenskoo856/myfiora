@@ -25,6 +25,7 @@ import { State } from '../../../state/reducer';
 import Tooltip from '../../../components/Tooltip';
 import themes from '../../../themes';
 import FileMessage from './FileMessage';
+import { parseThinkTags } from '../../../components/ThinkTag';
 
 const { dispatch } = store;
 
@@ -186,7 +187,18 @@ class Message extends Component<MessageProps, MessageState> {
     }
 
     renderContent() {
-        const { type, content, loading, percent, originUsername } = this.props;
+        const { type, content, loading, percent, tag, originUsername } = this.props;
+        
+        // Bot消息特殊处理：支持Think标签
+        if (tag === 'bot' && type === 'text') {
+            const parsedContent = parseThinkTags(content);
+            return (
+                <div className="text-message">
+                    {parsedContent}
+                </div>
+            );
+        }
+
         switch (type) {
             case 'text': {
                 return <TextMessage content={content} />;

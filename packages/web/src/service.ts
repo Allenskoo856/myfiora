@@ -443,3 +443,82 @@ export async function toggleNewUserSendMessage(enable: boolean) {
     const [, result] = await fetch('toggleNewUserSendMessage', { enable });
     return !!result;
 }
+
+/**
+ * 获取AI机器人配置
+ */
+export async function getBotConfig() {
+    const [, config] = await fetch('getBotConfig');
+    return config;
+}
+
+/**
+ * 配置AI机器人
+ * @param data 机器人配置
+ */
+export async function configureBot(data: {
+    name: string;
+    avatar?: string;
+    config: {
+        llmUrl: string;
+        apiKey: string;
+        model: string;
+        systemPrompt?: string;
+        temperature?: number;
+        maxTokens?: number;
+        maxHistory?: number;
+    };
+}) {
+    const [, result] = await fetch('configureBot', data);
+    return result;
+}
+
+/**
+ * 启用/禁用AI机器人
+ * @param enabled 是否启用
+ */
+export async function toggleBot(enabled: boolean) {
+    const [, result] = await fetch('toggleBot', { enabled });
+    return result;
+}
+
+/**
+ * 测试LLM连接
+ * @param config LLM配置
+ */
+export async function testLLMConnection(config: {
+    llmUrl: string;
+    apiKey: string;
+    model: string;
+}) {
+    const [, result] = await fetch('testLLMConnection', config);
+    return result;
+}
+
+/**
+ * 发送消息给AI机器人（私聊）
+ * @param content 消息内容
+ */
+export async function sendMessageToBot(content: string) {
+    const [, result] = await fetch('sendMessageToBot', { content });
+    return result;
+}
+
+/**
+ * 群聊@AI机器人
+ * @param groupId 群组ID
+ * @param content 消息内容
+ */
+export async function mentionBotInGroup(groupId: string, content: string) {
+    const [, result] = await fetch('mentionBotInGroup', { groupId, content });
+    return result;
+}
+
+/**
+ * 清除对话上下文
+ * @param groupId 群组ID（可选，私聊时不传）
+ */
+export async function clearConversation(groupId?: string) {
+    const [, result] = await fetch('clearConversation', { groupId });
+    return result;
+}

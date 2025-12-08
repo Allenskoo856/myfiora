@@ -7,6 +7,7 @@ import Dialog from '../../components/Dialog';
 import Input from '../../components/Input';
 import Button from '../../components/Button';
 import Message from '../../components/Message';
+import BotConfig from './BotConfig';
 import {
     getSealList,
     resetUserPassword,
@@ -25,6 +26,26 @@ const styles = {
         margin-right: 12px;
         padding: 0 10px;
     `,
+    tabs: css`
+        display: flex;
+        border-bottom: 1px solid var(--border-color);
+        margin-bottom: 16px;
+    `,
+    tab: css`
+        padding: 12px 24px;
+        cursor: pointer;
+        font-size: 14px;
+        color: var(--primary-text-color);
+        border-bottom: 2px solid transparent;
+        transition: all 0.3s;
+        &:hover {
+            color: var(--primary-color);
+        }
+    `,
+    tabActive: css`
+        color: var(--primary-color);
+        border-bottom-color: var(--primary-color);
+    `,
 };
 
 type SystemConfig = {
@@ -40,6 +61,7 @@ interface AdminProps {
 function Admin(props: AdminProps) {
     const { visible, onClose } = props;
 
+    const [activeTab, setActiveTab] = useState<'system' | 'bot'>('system');
     const [tagUsername, setTagUsername] = useState('');
     const [tag, setTag] = useState('');
     const [resetPasswordUsername, setResetPasswordUsername] = useState('');
@@ -147,7 +169,27 @@ function Admin(props: AdminProps) {
             title="管理员控制台"
             onClose={onClose}
         >
-            <div className={Common.container}>
+            <div className={styles.tabs}>
+                <div
+                    className={`${styles.tab} ${
+                        activeTab === 'system' ? styles.tabActive : ''
+                    }`}
+                    onClick={() => setActiveTab('system')}
+                >
+                    系统管理
+                </div>
+                <div
+                    className={`${styles.tab} ${
+                        activeTab === 'bot' ? styles.tabActive : ''
+                    }`}
+                    onClick={() => setActiveTab('bot')}
+                >
+                    AI机器人
+                </div>
+            </div>
+
+            {activeTab === 'system' && (
+                <div className={Common.container}>
                 <div className={Common.block}>
                     {!systemConfig?.disableSendMessage ? (
                         <Button
@@ -270,6 +312,9 @@ function Admin(props: AdminProps) {
                     </div>
                 </div>
             </div>
+            )}
+
+            {activeTab === 'bot' && <BotConfig />}
         </Dialog>
     );
 }
