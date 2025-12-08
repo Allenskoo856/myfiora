@@ -134,20 +134,40 @@ class Message extends Component<MessageProps, MessageState> {
         const { type, content } = this.props;
         if (type === 'system') return '';
 
-        if (['text', 'code', 'url', 'image'].includes(type)) {
+        if (type === 'text' || type === 'code' || type === 'url') {
             return content;
+        }
+
+        if (type === 'image') {
+            // 提取图片URL（可能带查询参数）
+            const urlMatch = content.match(/^([^?]+)/);
+            const imageUrl = urlMatch ? urlMatch[1] : content;
+            // 补全服务器地址
+            return this.getFullUrl(imageUrl);
         }
 
         if (type === 'file') {
             try {
                 const parsed = JSON.parse(content);
-                return parsed.fileUrl || parsed.filename || content;
+                if (parsed.fileUrl) {
+                    return this.getFullUrl(parsed.fileUrl);
+                }
+                return parsed.filename || content;
             } catch (err) {
                 return content;
             }
         }
 
         return '';
+    }
+
+    getFullUrl(url: string) {
+        if (!url) return url;
+        if (/^https?:\/\//.test(url) || url.startsWith('//')) return url;
+        const base = (window as any).location.origin;
+        const serverBase = require('@fiora/config/client').default.server;
+        const host = serverBase && serverBase !== '/' ? serverBase.replace(/^\/\//, 'http://') : base;
+        return url.startsWith('/') ? `${host}${url}` : `${host}/${url}`;
     }
 
     formatTime() {
