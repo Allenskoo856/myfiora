@@ -1,4 +1,4 @@
-FROM node:16-alpine
+FROM node:18-alpine
 
 WORKDIR /usr/app/fiora
 
@@ -8,6 +8,6 @@ RUN touch .env
 
 RUN yarn install
 
-RUN NODE_OPTIONS=--openssl-legacy-provider yarn build:web
+RUN yarn build:web
 
 CMD ["yarn", "start"]
