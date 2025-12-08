@@ -205,6 +205,20 @@ export async function leaveGroup(groupId: string) {
 }
 
 /**
+ * 获取群组文件列表
+ * @param groupId 群组id
+ * @param page 页码
+ * @param limit 每页数量
+ */
+export async function getGroupFiles(groupId: string, page = 1, limit = 20) {
+    const [error, result] = await fetch('getGroupFiles', { groupId, page, limit });
+    if (error) {
+        throw new Error(error);
+    }
+    return result;
+}
+
+/**
  * 添加好友
  * @param userId 目标用户id
  */

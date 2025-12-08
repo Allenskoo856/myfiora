@@ -17,10 +17,12 @@ import {
     changeGroupAvatar,
     deleteGroup,
     leaveGroup,
+    getGroupFiles,
 } from '../../service';
 import useAction from '../../hooks/useAction';
 import config from '../../../../config/client';
 import { ShowUserOrGroupInfoContext } from '../../context';
+import GroupFilesList from './GroupFilesList';
 
 interface GroupManagePanelProps {
     visible: boolean;
@@ -39,6 +41,7 @@ function GroupManagePanel(props: GroupManagePanelProps) {
     const selfId = useSelector((state: State) => state.user?._id);
     const [deleteConfirmDialog, setDialogStatus] = useState(false);
     const [groupName, setGroupName] = useState('');
+    const [activeTab, setActiveTab] = useState<'info' | 'files'>('info');
     const context = useContext(ShowUserOrGroupInfoContext);
 
     async function handleChangeGroupName() {
@@ -128,122 +131,150 @@ function GroupManagePanel(props: GroupManagePanelProps) {
                     visible ? Style.show : Style.hide
                 }`}
             >
-                <p className={Style.title}>群组信息</p>
-                <div className={Style.content}>
-                    {isLogin && selfId === creator ? (
-                        <div className={Style.block}>
-                            <p className={Style.blockTitle}>修改群名称</p>
-                            <Input
-                                className={Style.input}
-                                value={groupName}
-                                onChange={setGroupName}
-                            />
-                            <Button
-                                className={Style.button}
-                                onClick={handleChangeGroupName}
-                            >
-                                确认修改
-                            </Button>
-                        </div>
-                    ) : null}
-                    {isLogin && selfId === creator ? (
-                        <div className={Style.block}>
-                            <p className={Style.blockTitle}>修改群头像</p>
-                            <img
-                                className={Style.avatar}
-                                src={getOSSFileUrl(avatar)}
-                                alt="群头像预览"
-                                onClick={handleChangeGroupAvatar}
-                            />
-                        </div>
-                    ) : null}
-
-                    <div className={Style.block}>
-                        <p className={Style.blockTitle}>功能</p>
-                        {selfId === creator ? (
-                            <Button
-                                className={Style.button}
-                                type="danger"
-                                onClick={() => setDialogStatus(true)}
-                            >
-                                解散群组
-                            </Button>
-                        ) : (
-                            <Button
-                                className={Style.button}
-                                type="danger"
-                                onClick={handleLeaveGroup}
-                            >
-                                退出群组
-                            </Button>
-                        )}
-                    </div>
-                    <div className={Style.block}>
-                        <p className={Style.blockTitle}>
-                            在线成员 &nbsp;<span>{onlineMembers.length}</span>
-                        </p>
-                        <div>
-                            {onlineMembers.map((member) => (
-                                <div
-                                    key={member.user._id}
-                                    className={Style.onlineMember}
-                                >
-                                    <div
-                                        className={Style.userinfoBlock}
-                                        onClick={() =>
-                                            handleShowUserInfo(member.user)
-                                        }
-                                        role="button"
-                                    >
-                                        <Avatar
-                                            size={24}
-                                            src={member.user.avatar}
-                                        />
-                                        <p className={Style.username}>
-                                            {member.user.username}
-                                        </p>
-                                    </div>
-                                    <Tooltip
-                                        placement="top"
-                                        trigger={['hover']}
-                                        overlay={
-                                            <span>{member.environment}</span>
-                                        }
-                                    >
-                                        <p className={Style.clientInfoText}>
-                                            {member.browser}
-                                            &nbsp;&nbsp;
-                                            {member.os ===
-                                            'Windows Server 2008 R2 / 7'
-                                                ? 'Windows 7'
-                                                : member.os}
-                                        </p>
-                                    </Tooltip>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                    <Dialog
-                        className={Style.deleteGroupConfirmDialog}
-                        title="再次确认是否解散群组?"
-                        visible={deleteConfirmDialog}
-                        onClose={() => setDialogStatus(false)}
-                    >
-                        <Button
-                            className={Style.deleteGroupConfirmButton}
-                            type="danger"
-                            onClick={handleDeleteGroup}
+                <div className={Style.header}>
+                    <div className={Style.tabs}>
+                        <button
+                            className={`${Style.tab} ${activeTab === 'info' ? Style.activeTab : ''}`}
+                            onClick={() => setActiveTab('info')}
+                            type="button"
                         >
-                            确认
-                        </Button>
-                        <Button
-                            className={Style.deleteGroupConfirmButton}
-                            onClick={() => setDialogStatus(false)}
+                            群组信息
+                        </button>
+                        <button
+                            className={`${Style.tab} ${activeTab === 'files' ? Style.activeTab : ''}`}
+                            onClick={() => setActiveTab('files')}
+                            type="button"
                         >
-                            取消
-                        </Button>
-                    </Dialog>
+                            群文件
+                        </button>
+                    </div>
                 </div>
+                <div className={Style.content}>
+                    {activeTab === 'info' && (
+                        <div className={Style.infoTab}>
+                            {isLogin && selfId === creator ? (
+                                <div className={Style.block}>
+                                    <p className={Style.blockTitle}>修改群名称</p>
+                                    <Input
+                                        className={Style.input}
+                                        value={groupName}
+                                        onChange={setGroupName}
+                                    />
+                                    <Button
+                                        className={Style.button}
+                                        onClick={handleChangeGroupName}
+                                    >
+                                        确认修改
+                                    </Button>
+                                </div>
+                            ) : null}
+                            
+                            {isLogin && selfId === creator ? (
+                                <div className={Style.block}>
+                                    <p className={Style.blockTitle}>修改群头像</p>
+                                    <img
+                                        className={Style.avatar}
+                                        src={getOSSFileUrl(avatar)}
+                                        alt="群头像预览"
+                                        onClick={handleChangeGroupAvatar}
+                                    />
+                                </div>
+                            ) : null}
+
+                            <div className={Style.block}>
+                                <p className={Style.blockTitle}>功能</p>
+                                {selfId === creator ? (
+                                    <Button
+                                        className={Style.button}
+                                        type="danger"
+                                        onClick={() => setDialogStatus(true)}
+                                    >
+                                        解散群组
+                                    </Button>
+                                ) : (
+                                    <Button
+                                        className={Style.button}
+                                        type="danger"
+                                        onClick={handleLeaveGroup}
+                                    >
+                                        退出群组
+                                    </Button>
+                                )}
+                            </div>
+                            
+                            <div className={Style.block}>
+                                <p className={Style.blockTitle}>
+                                    在线成员 &nbsp;<span>{onlineMembers.length}</span>
+                                </p>
+                                <div>
+                                    {onlineMembers.map((member) => (
+                                        <div
+                                            key={member.user._id}
+                                            className={Style.onlineMember}
+                                        >
+                                            <div
+                                                className={Style.userinfoBlock}
+                                                onClick={() =>
+                                                    handleShowUserInfo(member.user)
+                                                }
+                                                role="button"
+                                            >
+                                                <Avatar
+                                                    size={24}
+                                                    src={member.user.avatar}
+                                                />
+                                                <p className={Style.username}>
+                                                    {member.user.username}
+                                                </p>
+                                            </div>
+                                            <Tooltip
+                                                placement="top"
+                                                trigger={['hover']}
+                                                overlay={
+                                                    <span>{member.environment}</span>
+                                                }
+                                            >
+                                                <p className={Style.clientInfoText}>
+                                                    {member.browser}
+                                                    &nbsp;&nbsp;
+                                                    {member.os ===
+                                                    'Windows Server 2008 R2 / 7'
+                                                        ? 'Windows 7'
+                                                        : member.os}
+                                                </p>
+                                            </Tooltip>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {activeTab === 'files' && (
+                        <GroupFilesList groupId={groupId} />
+                    )}
+                </div>
+
+                <Dialog
+                    className={Style.deleteGroupConfirmDialog}
+                    title="再次确认是否解散群组?"
+                    visible={deleteConfirmDialog}
+                    onClose={() => setDialogStatus(false)}
+                >
+                    <Button
+                        className={Style.deleteGroupConfirmButton}
+                        type="danger"
+                        onClick={handleDeleteGroup}
+                    >
+                        确认
+                    </Button>
+                    <Button
+                        className={Style.deleteGroupConfirmButton}
+                        onClick={() => setDialogStatus(false)}
+                    >
+                        取消
+                    </Button>
+                </Dialog>
             </div>
         </div>
     );

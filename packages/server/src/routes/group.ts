@@ -335,3 +335,76 @@ export async function getGroupBasicInfo(ctx: Context<{ groupId: string }>) {
         members: group.members.length,
     };
 }
+
+/**
+ * 获取群组文件列表
+ * @param ctx Context
+ */
+export async function getGroupFiles(ctx: Context<{ groupId: string; page?: number; limit?: number }>) {
+    const { groupId, page = 1, limit = 20 } = ctx.data;
+    assert(isValid(groupId), '无效的群组ID');
+
+    // 验证群组存在且用户是群成员
+    const group = await Group.findOne({ _id: groupId });
+    if (!group) {
+        throw new AssertionError({ message: '群组不存在' });
+    }
+
+    const isGroupMember = group.members.some(
+        (memberId) => memberId.toString() === ctx.socket.user.toString()
+    );
+    assert(isGroupMember, '只有群成员才能查看群文件');
+
+    // 查询群组文件消息
+    const files = await Message.find(
+        {
+            to: groupId,
+            type: 'file',
+            deleted: false,
+        },
+        {
+            _id: 1,
+            from: 1,
+            content: 1,
+            createTime: 1,
+        },
+        {
+            sort: { createTime: -1 },
+            skip: (page - 1) * limit,
+            limit: Number(limit),
+        }
+    ).populate('from', { username: 1, avatar: 1 });
+
+    // 统计文件总数
+    const totalCount = await Message.countDocuments({
+        to: groupId,
+        type: 'file',
+        deleted: false,
+    });
+
+    // 格式化文件信息
+    const fileList = files.map((file) => {
+        const fileInfo = JSON.parse(file.content);
+        return {
+            _id: file._id,
+            filename: fileInfo.filename,
+            fileUrl: fileInfo.fileUrl,
+            size: fileInfo.size,
+            ext: fileInfo.ext,
+            uploader: {
+                _id: (file.from as any)._id,
+                username: (file.from as any).username,
+                avatar: (file.from as any).avatar,
+            },
+            uploadTime: file.createTime,
+        };
+    });
+
+    return {
+        files: fileList,
+        total: totalCount,
+        page: Number(page),
+        limit: Number(limit),
+        hasMore: page * limit < totalCount,
+    };
+}

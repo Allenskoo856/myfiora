@@ -52,6 +52,43 @@
     }
 }
 
+// 新增标签页样式
+.header {
+    border-bottom: 1px solid #e8e8e8;
+}
+
+.tabs {
+    display: flex;
+    height: 50px;
+}
+
+.tab {
+    flex: 1;
+    border: none;
+    background: none;
+    padding: 0;
+    font-size: 14px;
+    color: #666;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border-bottom: 2px solid transparent;
+
+    &:hover {
+        background-color: rgba(0, 0, 0, 0.02);
+        color: #333;
+    }
+}
+
+.activeTab {
+    color: #1890ff;
+    border-bottom-color: #1890ff;
+    font-weight: 500;
+}
+
+.infoTab {
+    // 原有内容保持不变
+}
+
 .content {
     flex: 1;
     padding: 12px;
