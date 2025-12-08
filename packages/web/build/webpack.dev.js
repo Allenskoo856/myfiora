@@ -7,6 +7,7 @@ module.exports = merge(common, {
     mode: 'development',
     output: {
         publicPath: '/',
+        hashFunction: 'xxhash64',
     },
     devtool: 'inline-source-map',
     devServer: {

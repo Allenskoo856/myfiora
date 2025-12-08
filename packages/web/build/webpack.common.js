@@ -18,6 +18,20 @@ module.exports = {
     resolve: {
         extensions: ['.js', '.jsx', '.json', '.ts', '.tsx'],
     },
+    // 全局设置哈希函数，避免 OpenSSL 3.0 不支持 MD4
+    optimization: {
+        moduleIds: 'deterministic',
+        runtimeChunk: 'single',
+        splitChunks: {
+            cacheGroups: {
+                vendor: {
+                    test: /[\\/]node_modules[\\/]/,
+                    name: 'vendors',
+                    chunks: 'all',
+                },
+            },
+        },
+    },
     module: {
         rules: [
             {

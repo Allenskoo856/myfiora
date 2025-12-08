@@ -9,6 +9,7 @@ module.exports = merge(common, {
     mode: 'production',
     output: {
         publicPath: process.env.PublicPath || '/',
+        hashFunction: 'xxhash64',
     },
     devtool: false,
     optimization: {
