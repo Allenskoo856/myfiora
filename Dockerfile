@@ -1,4 +1,6 @@
-FROM node:18-alpine
+FROM node:16-alpine
+
+ENV NODE_OPTIONS=--openssl-legacy-provider
 
 WORKDIR /usr/app/fiora
 
