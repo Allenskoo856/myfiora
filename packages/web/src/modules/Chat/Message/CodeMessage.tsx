@@ -45,6 +45,7 @@ function CodeMessage(props: CodeMessageProps) {
 
     const language = languagesMap[parseResult[1]] || 'text';
     const rawCode = code.replace(/@language=[_a-z]+@/, '');
+    const lines = rawCode.split('\n').length;
     let size = `${rawCode.length}B`;
     if (rawCode.length > 1024) {
         size = `${Math.ceil((rawCode.length / 1024) * 100) / 100}KB`;
@@ -57,16 +58,36 @@ function CodeMessage(props: CodeMessageProps) {
                 onClick={() => toggleCodeDialog(true)}
                 role="button"
             >
-                <div className={Style.codeInfo}>
-                    <div className={Style.icon}>
+                <div className={Style.codeHeader}>
+                    <div className={Style.codeDots}>
+                        <span className={Style.dot} data-color="red" />
+                        <span className={Style.dot} data-color="yellow" />
+                        <span className={Style.dot} data-color="green" />
+                    </div>
+                    <div className={Style.languageTag}>{language}</div>
+                </div>
+                <div className={Style.codeBody}>
+                    <div className={Style.iconWrapper}>
                         <i className="iconfont icon-code" />
                     </div>
-                    <div>
-                        <span>{language}</span>
-                        <span className={Style.codeSize}>{size}</span>
+                    <div className={Style.codeDetails}>
+                        <div className={Style.codeTitle}>Code Snippet</div>
+                        <div className={Style.codeStats}>
+                            <span className={Style.statItem}>
+                                <i className="iconfont icon-info" style={{ fontSize: '12px', marginRight: '4px' }} />
+                                {lines} 行
+                            </span>
+                            <span className={Style.statDivider}>·</span>
+                            <span className={Style.statItem}>{size}</span>
+                        </div>
                     </div>
                 </div>
-                <p className={Style.codeViewButton}>查看</p>
+                <div className={Style.codeFooter}>
+                    <span className={Style.viewButton}>
+                        查看代码
+                        <i className="iconfont icon-gongneng" style={{ fontSize: '12px', marginLeft: '6px' }} />
+                    </span>
+                </div>
             </div>
             {codeDialog && (
                 <CodeDialogAsync
