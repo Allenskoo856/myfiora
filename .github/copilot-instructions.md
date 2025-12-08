@@ -185,3 +185,4 @@ Run via: `yarn script` (uses Lerna to execute bin package)
 - 每次回复时候需要使用简体中文，语义表达准确、不啰嗦、不重复、直接给出解决方案
 - 没经过用户同意，不要随意创建makdown文件、以及shell脚本、允许创建和修改项目相关的ts、js文件及config文件
 - 当前项目是前后端分离的项目、每次修改代码之后请注意前后端代码是否需要同时修改、重载后前后端进程需要一起启动
+- 请记住当前项目需要后端先启动、然后前端才能启动、后端启动命令是：`yarn dev:server`、前端启动命令是：`NODE_OPTIONS=--openssl-legacy-provider yarn dev:web`，启动项目之前需要先检查本地的MongoDB和Redis服务是否已经启动，否则后端服务无法启动，启动命令是：docker-compose up -d mongodb redis

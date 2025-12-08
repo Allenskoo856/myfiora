@@ -11,11 +11,11 @@ services:
     restart: always
     ports:
       - "6379:6379"
-  fiora:
-    build: .
-    restart: always
-    ports:
-      - "9200:9200"
-    environment:
-      - Database=mongodb://mongodb/fiora
-      - RedisHost=redis
+  # fiora:
+  #   build: .
+  #   restart: always
+  #   ports:
+  #     - "9200:9200"
+  #   environment:
+  #     - Database=mongodb://mongodb/fiora
+  #     - RedisHost=redis
