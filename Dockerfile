@@ -1,5 +1,7 @@
 FROM node:18-alpine
 
+ENV NODE_OPTIONS=--openssl-legacy-provider
+
 WORKDIR /usr/app/fiora
 
 COPY packages ./packages
