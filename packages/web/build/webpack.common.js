@@ -13,7 +13,7 @@ module.exports = {
         filename: 'js/[name].[chunkhash:8].js',
         path: path.resolve(__dirname, '../dist/fiora'),
         // 避免 OpenSSL 3.0 禁用 md4 导致的构建失败
-        hashFunction: 'xxhash64',
+        hashFunction: 'sha256',
     },
     resolve: {
         extensions: ['.js', '.jsx', '.json', '.ts', '.tsx'],
