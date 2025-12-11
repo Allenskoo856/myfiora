@@ -27,7 +27,7 @@
     "prop-types": "^15.6.1",
     "randomcolor": "^0.6.2",
     "react": "16.13.1",
-    "react-native": "https://github.com/expo/react-native/archive/sdk-42.0.0.tar.gz",
+    "react-native": "0.63.4",
     "react-native-dialog": "^6.2.0",
     "react-native-gesture-handler": "~1.10.2",
     "react-native-image-zoom-viewer": "^3.0.1",
